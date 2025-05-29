@@ -1,0 +1,57 @@
+from openai import OpenAI    # 导入OpenAI库
+import os                    # 导入os库
+
+API_KEY = 'opneai-api-key'  # <--- 在这里替换您的API密钥 (REPLACE YOUR API KEY HERE)
+
+BASE_URL = 'https://api.openai-proxy.org/v1'
+
+try:
+    if BASE_URL:
+        print(f"使用自定义基础URL: {BASE_URL}")
+        client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    else:
+        print("未提供基础URL，将尝试直连 OpenAI (使用硬编码的API密钥)。")
+        client = OpenAI(api_key=API_KEY)
+
+except Exception as e:
+    print(f"初始化 OpenAI 客户端时出错: {e}")
+    print("请确保脚本中硬编码的 API_KEY 和 BASE_URL (如果使用代理) 是正确的。")
+    exit()
+
+# --- 调用OpenAI API的主要函数 (向GPT-3.5 Turbo发送一个提示，要求它介绍自己，并打印回复) ---
+def ask_gpt_to_introduce_itself():
+    try:
+        print("正在向 GPT-3.5 Turbo 发送请求，请稍候...")
+        
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # 指定使用的模型 (Specify the model to use)
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."}, # 系统消息，设定助手的角色 (System message to set the assistant's role)
+                {"role": "user", "content": "介绍一下你自己。"}  # 用户提示 (User prompt: "Introduce yourself.")
+            ]
+        )
+        
+        # 提取并打印模型的回复
+        if completion and completion.choices and len(completion.choices) > 0:
+            assistant_message = completion.choices[0].message.content
+            print("\nGPT-3.5 Turbo 的回复：")
+            print(assistant_message)
+        else:
+            print("未能从 API 获取有效回复。")
+       
+    except OpenAI.APIConnectionError as e: # 注意: openai.APIConnectionError 更改为 OpenAI.APIConnectionError (根据最新库)
+        print(f"无法连接到 API: {e}")
+        print(f"请检查您的网络连接以及脚本中硬编码的 BASE_URL (当前为：{BASE_URL}) 是否正确。")
+    except OpenAI.RateLimitError as e: # 注意: openai.RateLimitError 更改为 OpenAI.RateLimitError
+        print(f"API请求超过速率限制: {e}")
+    except OpenAI.AuthenticationError as e: # 注意: openai.AuthenticationError 更改为 OpenAI.AuthenticationError
+        print(f"API密钥认证失败: {e}")
+        print("请检查脚本中硬编码的 API_KEY 是否正确并具有足够权限。")
+    except OpenAI.APIError as e: # 更通用的API错误 (More general API error)
+        print(f"调用 OpenAI API 时发生错误：{e}")
+    except Exception as e: # 其他所有意外错误 (All other unexpected errors)
+        print(f"发生意外错误：{e}")
+
+# --- 脚本执行入口 (Script Execution Entry Point) ---
+if __name__ == "__main__":
+    ask_gpt_to_introduce_itself()
