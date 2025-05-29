@@ -1,1 +1,1 @@
-There are some programers about LLM api usage.
+Here are some sample programs showing how to use the LLM API.
